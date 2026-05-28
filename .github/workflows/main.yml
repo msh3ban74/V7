@@ -25,12 +25,19 @@ jobs:
           GRADLE_DIR=$(dirname "$GRADLE_PATH")
           cd "$GRADLE_DIR"
           
-          # إنشاء ملفات البيئة الناقصة أوتوماتيكياً لتخطي اعتراض الجرادل
+          # إنشاء ملفات البيئة في المجلد الرئيسي وفي مجلد app لتفادي اعتراض المترجم
           touch .env
           touch .env.example
+          if [ -d "app" ]; then
+            touch app/.env
+            touch app/.env.example
+          fi
           
           # توليد ملف الـ keystore
           keytool -genkey -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
+          if [ -d "app" ]; then
+            cp debug.keystore app/
+          fi
           
           # تشغيل البناء
           gradle assembleDebug
