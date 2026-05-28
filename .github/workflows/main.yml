@@ -10,18 +10,15 @@ jobs:
       - name: Build and Unzip
         run: |
           unzip -q "*.zip" -d project
-          # الانتقال لمجلد المشروع
+          # الانتقال للمجلد
           cd "$(find project -name "gradlew" -exec dirname {} \; | head -n 1)"
           
-          # مسح ملفات الـ Wrapper التالفة عشان الـ GitHub يجددها
+          # مسح أي wrapper قديم تالف
           rm -rf gradle/wrapper/gradle-wrapper.jar
           
-          # إنشاء Wrapper جديد ونظيف
-          ./gradlew wrapper --gradle-version 8.5
-          
-          # تنفيذ البناء
-          chmod +x gradlew
-          ./gradlew assembleDebug
+          # استخدام sh لتشغيل الـ gradlew مباشرة كمعامل
+          sh gradlew wrapper
+          sh gradlew assembleDebug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
