@@ -21,17 +21,14 @@ jobs:
           LATEST_ZIP=$(ls -t *.zip | head -n 1)
           unzip -q "$LATEST_ZIP" -d project
           
-          # تحديد المسار الحقيقي الذي يحتوي على settings.gradle أو build.gradle
           GRADLE_PATH=$(find project -name "settings.gradle" -o -name "settings.gradle.kts" | head -n 1)
           GRADLE_DIR=$(dirname "$GRADLE_PATH")
-          
-          echo "Moving to project directory: $GRADLE_DIR"
           cd "$GRADLE_DIR"
           
-          # التأكد من الملفات الموجودة للمعاينة في الـ Logs
-          ls -la
+          # توليد ملف debug.keystore افتراضي في مجلد المشروع لحل مشكلة التوقيع
+          keytool -genkey -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
           
-          # البناء المباشر
+          # تشغيل البناء
           gradle assembleDebug
 
       - name: Upload APK
