@@ -1,1 +1,25 @@
 
+name: Build APK from ZIP
+on: [push]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build and Unzip
+        run: |
+          LATEST_ZIP=$(ls -t *.zip | head -n 1)
+          echo "Building from: $LATEST_ZIP"
+          unzip -q "$LATEST_ZIP" -d project
+          cd "$(find project -name "gradlew" -exec dirname {} \; | head -n 1)"
+          rm -rf gradle/wrapper/gradle-wrapper.jar
+          ./gradlew wrapper --gradle-version 8.5
+          sh gradlew assembleDebug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-debug
+          path: '**/build/outputs/apk/debug/app-debug.apk'
