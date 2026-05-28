@@ -1,26 +1,10 @@
-name: Build APK from ZIP
-on: [push]
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
       - name: Build and Unzip
         run: |
-          # فك ضغط المشروع
-          unzip -q "*.zip" -d project
-          # الدخول للمجلد وفك الضغط أو التعامل مع الملفات مباشرة
+          # البحث عن أي ملف ينتهي بـ zip وفك ضغطه
+          find . -name "*.zip" -exec unzip -q {} -d project \;
+          # التأكد من الدخول للمجلد
           cd project
           # إعطاء صلاحية التنفيذ للجرادل
           chmod +x gradlew
           # بناء التطبيق
           ./gradlew assembleDebug
-
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: app-debug
-          path: '**/build/outputs/apk/debug/app-debug.apk'
-
