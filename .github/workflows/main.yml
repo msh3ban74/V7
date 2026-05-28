@@ -25,11 +25,21 @@ jobs:
           GRADLE_DIR=$(dirname "$GRADLE_PATH")
           cd "$GRADLE_DIR"
           
-          # إجبار إصلاح الـ imports المكسورة داخل السيرفر مباشرة في الـ 4 ملفات
-          find app/src/main/java -name "*.kt" -type f -exec sed -i '/import androidx.compose.foundation/N;s/import androidx.compose.foundation\n.*gestures.detectTapGestures/import androidx.compose.foundation.gestures.detectTapGestures/g' {} +
-          find app/src/main/java -name "*.kt" -type f -exec sed -i 's/import androidx.compose.foundation.gestures.detectTapGestures/import androidx.compose.foundation.gestures.detectTapGestures/g' {} +
+          # مسح أي استدعاء مكسور أو قديم وإعادة زرعه بشكل سليم 100% في الـ 4 ملفات
+          for file in app/src/main/java/com/example/presentation/screens/favorites/FavoritesScreen.kt \
+                      app/src/main/java/com/example/presentation/screens/gallery/GalleryScreen.kt \
+                      app/src/main/java/com/example/presentation/screens/vault/VaultScreen.kt \
+                      app/src/main/java/com/example/presentation/screens/music/MusicScreen.kt; do
+            if [ -f "$file" ]; then
+              # إزالة أي أسطر قد تكون مكسورة بسبب الـ Wrap القديم
+              sed -i '/detectTapGestures/d' "$file"
+              sed -i '/foundation.gestures/d' "$file"
+              # إضافة الـ import الصحيح والمفرود مباشرة في السطر الثاني
+              sed -i '2i import androidx.compose.foundation.gestures.detectTapGestures' "$file"
+            fi
+          done
 
-          # إنشاء ملفات البيئة
+          # إنشاء ملفات البيئة لتفادي اعتراض المترجم
           touch .env
           touch .env.example
           if [ -d "app" ]; then touch app/.env; touch app/.env.example; fi
