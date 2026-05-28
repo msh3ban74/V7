@@ -25,7 +25,11 @@ jobs:
           GRADLE_DIR=$(dirname "$GRADLE_PATH")
           cd "$GRADLE_DIR"
           
-          # توليد ملف debug.keystore افتراضي في مجلد المشروع لحل مشكلة التوقيع
+          # إنشاء ملفات البيئة الناقصة أوتوماتيكياً لتخطي اعتراض الجرادل
+          touch .env
+          touch .env.example
+          
+          # توليد ملف الـ keystore
           keytool -genkey -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
           
           # تشغيل البناء
