@@ -21,11 +21,17 @@ jobs:
           LATEST_ZIP=$(ls -t *.zip | head -n 1)
           unzip -q "$LATEST_ZIP" -d project
           
-          # الدخول لمجلد المشروع اللي فيه ملف build.gradle
-          GRADLE_DIR=$(find project -name "build.gradle" -exec dirname {} \; | head -n 1)
+          # تحديد المسار الحقيقي الذي يحتوي على settings.gradle أو build.gradle
+          GRADLE_PATH=$(find project -name "settings.gradle" -o -name "settings.gradle.kts" | head -n 1)
+          GRADLE_DIR=$(dirname "$GRADLE_PATH")
+          
+          echo "Moving to project directory: $GRADLE_DIR"
           cd "$GRADLE_DIR"
           
-          # البناء باستخدام جرادل السيرفر الجاهز مباشرة بدون gradlew المكسور
+          # التأكد من الملفات الموجودة للمعاينة في الـ Logs
+          ls -la
+          
+          # البناء المباشر
           gradle assembleDebug
 
       - name: Upload APK
