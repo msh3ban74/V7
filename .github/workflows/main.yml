@@ -9,8 +9,9 @@ jobs:
 
       - name: Build and Unzip
         run: |
-          find . -name "*.zip" -exec unzip -q {} -d project \;
-          cd project
+          unzip -q "*.zip" -d project
+          # البحث عن ملف gradlew في أي مجلد فرعي والدخول إليه
+          cd "$(find project -name "gradlew" -exec dirname {} \; | head -n 1)"
           chmod +x gradlew
           ./gradlew assembleDebug
 
