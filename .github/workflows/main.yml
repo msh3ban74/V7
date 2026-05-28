@@ -1,4 +1,3 @@
-
 name: Build APK from ZIP
 on: [push]
 jobs:
@@ -11,12 +10,18 @@ jobs:
       - name: Build and Unzip
         run: |
           LATEST_ZIP=$(ls -t *.zip | head -n 1)
-          echo "Building from: $LATEST_ZIP"
           unzip -q "$LATEST_ZIP" -d project
-          cd "$(find project -name "gradlew" -exec dirname {} \; | head -n 1)"
+          
+          # إيجاد المجلد الذي يحتوي على gradlew
+          GRADLEW_DIR=$(find project -name "gradlew" -exec dirname {} \; | head -n 1)
+          cd "$GRADLEW_DIR"
+          
+          # مسح أي wrapper تالف
           rm -rf gradle/wrapper/gradle-wrapper.jar
-          ./gradlew wrapper --gradle-version 8.5
-          sh gradlew assembleDebug
+          
+          # استخدام bash لتنفيذ الـ wrapper ثم البناء
+          bash ./gradlew wrapper --gradle-version 8.5
+          bash ./gradlew assembleDebug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
