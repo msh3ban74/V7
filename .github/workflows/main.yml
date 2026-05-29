@@ -1,8 +1,14 @@
-name: Build APK from ZIP
-on: [push]
+name: Build V7 APK
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -13,46 +19,39 @@ jobs:
           distribution: 'zulu'
           java-version: '17'
 
+      - name: Unzip project
+        run: |
+          LATEST_ZIP=$(ls -t *.zip 2>/dev/null | head -n 1)
+          echo "Found ZIP: $LATEST_ZIP"
+          unzip -q "$LATEST_ZIP" -d extracted
+          if [ -f "extracted/V7/gradlew" ]; then
+            cp -r extracted/V7/. .
+          elif [ -f "extracted/gradlew" ]; then
+            cp -r extracted/. .
+          else
+            GRADLE_DIR=$(find extracted -name "gradlew" | head -1 | xargs dirname)
+            cp -r "$GRADLE_DIR"/. .
+          fi
+          echo "✅ Extracted"
+          ls -la
+
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
 
-      - name: Unzip and Build
-        run: |
-          LATEST_ZIP=$(ls -t *.zip | head -n 1)
-          unzip -q "$LATEST_ZIP" -d project
-          
-          GRADLE_PATH=$(find project -name "settings.gradle" -o -name "settings.gradle.kts" | head -n 1)
-          GRADLE_DIR=$(dirname "$GRADLE_PATH")
-          cd "$GRADLE_DIR"
-          
-          # مسح أي استدعاء مكسور أو قديم وإعادة زرعه بشكل سليم 100% في الـ 4 ملفات
-          for file in app/src/main/java/com/example/presentation/screens/favorites/FavoritesScreen.kt \
-                      app/src/main/java/com/example/presentation/screens/gallery/GalleryScreen.kt \
-                      app/src/main/java/com/example/presentation/screens/vault/VaultScreen.kt \
-                      app/src/main/java/com/example/presentation/screens/music/MusicScreen.kt; do
-            if [ -f "$file" ]; then
-              # إزالة أي أسطر قد تكون مكسورة بسبب الـ Wrap القديم
-              sed -i '/detectTapGestures/d' "$file"
-              sed -i '/foundation.gestures/d' "$file"
-              # إضافة الـ import الصحيح والمفرود مباشرة في السطر الثاني
-              sed -i '2i import androidx.compose.foundation.gestures.detectTapGestures' "$file"
-            fi
-          done
+      - name: Generate Gradle Wrapper JAR
+        run: gradle wrapper --gradle-version 8.9
 
-          # إنشاء ملفات البيئة لتفادي اعتراض المترجم
-          touch .env
-          touch .env.example
-          if [ -d "app" ]; then touch app/.env; touch app/.env.example; fi
-          
-          # توليد ملف الـ keystore
-          keytool -genkey -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
-          if [ -d "app" ]; then cp debug.keystore app/; fi
-          
-          # تشغيل البناء
-          gradle assembleDebug
+      - name: Make gradlew executable
+        run: chmod +x gradlew
+
+      - name: Build Debug APK
+        run: ./gradlew assembleDebug --no-daemon --stacktrace
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: app-debug
-          path: '**/build/outputs/apk/debug/app-debug.apk'
+          name: V7-debug-APK
+          path: app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 30
